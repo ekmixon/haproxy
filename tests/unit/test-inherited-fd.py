@@ -8,6 +8,7 @@ mode.
 
 """
 
+
 import socket, subprocess, fcntl
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -20,4 +21,6 @@ s.bind((socket.gethostname(), 5555))
 s.listen(1)
 FD = s.fileno()
 
-subprocess.Popen('NEWFD={} ./haproxy -W -f haproxy.cfg'.format(FD), shell=True, close_fds=False)
+subprocess.Popen(
+    f'NEWFD={FD} ./haproxy -W -f haproxy.cfg', shell=True, close_fds=False
+)

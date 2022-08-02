@@ -14,10 +14,10 @@ import sys
 if len(sys.argv) == 2:
     build_type = sys.argv[1]
 else:
-    print("Usage: {} <build_type>".format(sys.argv[0]), file=sys.stderr)
+    print(f"Usage: {sys.argv[0]} <build_type>", file=sys.stderr)
     sys.exit(1)
 
-print("Generating matrix for type '{}'.".format(build_type))
+print(f"Generating matrix for type '{build_type}'.")
 
 
 def clean_os(os):
@@ -55,57 +55,54 @@ matrix = []
 os = "ubuntu-latest"
 TARGET = "linux-glibc"
 for CC in ["gcc", "clang"]:
-    matrix.append(
-        {
-            "name": "{}, {}, no features".format(clean_os(os), CC),
-            "os": os,
-            "TARGET": TARGET,
-            "CC": CC,
-            "FLAGS": [],
-        }
-    )
-
-    matrix.append(
-        {
-            "name": "{}, {}, all features".format(clean_os(os), CC),
-            "os": os,
-            "TARGET": TARGET,
-            "CC": CC,
-            "FLAGS": [
-                "USE_ZLIB=1",
-                "USE_OT=1",
-                "OT_INC=${HOME}/opt-ot/include",
-                "OT_LIB=${HOME}/opt-ot/lib",
-                "OT_RUNPATH=1",
-                "USE_PCRE=1",
-                "USE_PCRE_JIT=1",
-                "USE_LUA=1",
-                "USE_OPENSSL=1",
-                "USE_SYSTEMD=1",
-                "USE_WURFL=1",
-                "WURFL_INC=addons/wurfl/dummy",
-                "WURFL_LIB=addons/wurfl/dummy",
-                "USE_DEVICEATLAS=1",
-                "DEVICEATLAS_SRC=addons/deviceatlas/dummy",
-                "USE_PROMEX=1",
-                "USE_51DEGREES=1",
-                "51DEGREES_SRC=addons/51degrees/dummy/pattern",
-            ],
-        }
-    )
-
-    for compression in ["USE_ZLIB=1"]:
-        matrix.append(
+    matrix.extend(
+        (
             {
-                "name": "{}, {}, gz={}".format(
-                    clean_os(os), CC, clean_compression(compression)
-                ),
+                "name": f"{clean_os(os)}, {CC}, no features",
                 "os": os,
                 "TARGET": TARGET,
                 "CC": CC,
-                "FLAGS": [compression],
-            }
+                "FLAGS": [],
+            },
+            {
+                "name": f"{clean_os(os)}, {CC}, all features",
+                "os": os,
+                "TARGET": TARGET,
+                "CC": CC,
+                "FLAGS": [
+                    "USE_ZLIB=1",
+                    "USE_OT=1",
+                    "OT_INC=${HOME}/opt-ot/include",
+                    "OT_LIB=${HOME}/opt-ot/lib",
+                    "OT_RUNPATH=1",
+                    "USE_PCRE=1",
+                    "USE_PCRE_JIT=1",
+                    "USE_LUA=1",
+                    "USE_OPENSSL=1",
+                    "USE_SYSTEMD=1",
+                    "USE_WURFL=1",
+                    "WURFL_INC=addons/wurfl/dummy",
+                    "WURFL_LIB=addons/wurfl/dummy",
+                    "USE_DEVICEATLAS=1",
+                    "DEVICEATLAS_SRC=addons/deviceatlas/dummy",
+                    "USE_PROMEX=1",
+                    "USE_51DEGREES=1",
+                    "51DEGREES_SRC=addons/51degrees/dummy/pattern",
+                ],
+            },
         )
+    )
+
+    matrix.extend(
+        {
+            "name": f"{clean_os(os)}, {CC}, gz={clean_compression(compression)}",
+            "os": os,
+            "TARGET": TARGET,
+            "CC": CC,
+            "FLAGS": [compression],
+        }
+        for compression in ["USE_ZLIB=1"]
+    )
 
     for ssl in [
         "stock",
@@ -117,14 +114,13 @@ for CC in ["gcc", "clang"]:
 #        "BORINGSSL=yes",
     ]:
         flags = ["USE_OPENSSL=1"]
-        if ssl == "BORINGSSL=yes" or ssl == "QUICTLS=yes":
+        if ssl in ["BORINGSSL=yes", "QUICTLS=yes"]:
             flags.append("USE_QUIC=1")
         if ssl != "stock":
-            flags.append("SSL_LIB=${HOME}/opt/lib")
-            flags.append("SSL_INC=${HOME}/opt/include")
+            flags.extend(("SSL_LIB=${HOME}/opt/lib", "SSL_INC=${HOME}/opt/include"))
         matrix.append(
             {
-                "name": "{}, {}, ssl={}".format(clean_os(os), CC, clean_ssl(ssl)),
+                "name": f"{clean_os(os)}, {CC}, ssl={clean_ssl(ssl)}",
                 "os": os,
                 "TARGET": TARGET,
                 "CC": CC,
@@ -133,6 +129,7 @@ for CC in ["gcc", "clang"]:
             }
         )
 
+
 # ASAN
 
 os = "ubuntu-latest"
@@ -140,7 +137,7 @@ CC = "clang"
 TARGET = "linux-glibc"
 matrix.append(
     {
-        "name": "{}, {}, ASAN, all features".format(clean_os(os), CC),
+        "name": f"{clean_os(os)}, {CC}, ASAN, all features",
         "os": os,
         "TARGET": TARGET,
         "CC": CC,
@@ -168,20 +165,21 @@ matrix.append(
     }
 )
 
+
 # macOS
 
 os = "macos-latest"
 TARGET = "osx"
-for CC in ["clang"]:
-    matrix.append(
-        {
-            "name": "{}, {}, no features".format(clean_os(os), CC),
-            "os": os,
-            "TARGET": TARGET,
-            "CC": CC,
-            "FLAGS": [],
-        }
-    )
+matrix.extend(
+    {
+        "name": f"{clean_os(os)}, {CC}, no features",
+        "os": os,
+        "TARGET": TARGET,
+        "CC": CC,
+        "FLAGS": [],
+    }
+    for CC in ["clang"]
+)
 
 # Print matrix
 
